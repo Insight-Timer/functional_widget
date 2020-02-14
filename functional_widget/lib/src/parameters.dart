@@ -7,39 +7,30 @@ class FunctionParameters {
   FunctionParameters._(this._parameters);
 
   factory FunctionParameters.parseFunctionElement(FunctionElement element) {
-    return FunctionParameters._(
-        element.parameters.map(_parseParameter).toList());
+    return FunctionParameters._(element.parameters.map(_parseParameter).toList());
   }
 
   final List<Parameter> _parameters;
 
   bool get startsWithKey => _parameters.isNotEmpty && _isKey(_parameters.first);
-  bool get startsWithContext =>
-      _parameters.isNotEmpty && _isContext(_parameters.first);
-  bool get followedByKey =>
-      _parameters.length > 1 && startsWithContext && _isKey(_parameters[1]);
-  bool get followedByContext =>
-      _parameters.length > 1 && startsWithKey && _isContext(_parameters[1]);
+  bool get startsWithContext => _parameters.isNotEmpty && _isContext(_parameters.first);
+  bool get followedByKey => _parameters.length > 1 && startsWithContext && _isKey(_parameters[1]);
+  bool get followedByContext => _parameters.length > 1 && startsWithKey && _isContext(_parameters[1]);
 
   List<Parameter> get userDefined => (followedByContext || followedByKey)
       ? (List<Parameter>.from(_parameters)..removeRange(0, 2))
-      : (startsWithContext || startsWithKey)
-          ? (List<Parameter>.from(_parameters)..removeRange(0, 1))
-          : _parameters;
+      : (startsWithContext || startsWithKey) ? (List<Parameter>.from(_parameters)..removeRange(0, 1)) : _parameters;
 }
 
 bool _isKey(Parameter param) => param.type?.symbol == 'Key';
 
-bool _isContext(Parameter param) =>
-    param.type?.symbol == 'BuildContext' || param.type?.symbol == 'HookContext';
+bool _isContext(Parameter param) => param.type?.symbol == 'BuildContext' || param.type?.symbol == 'HookContext';
 
 Parameter _parseParameter(ParameterElement parameter) {
   return Parameter(
     (b) => b
       ..name = parameter.name
-      ..defaultTo = parameter.defaultValueCode != null
-          ? Code(parameter.defaultValueCode)
-          : null
+      ..defaultTo = parameter.defaultValueCode != null ? Code(parameter.defaultValueCode) : null
       ..docs.add(parameter.documentationComment ?? '')
       ..annotations.addAll(parameter.metadata.map((meta) {
         return CodeExpression(Code(meta.element.displayName));
@@ -51,13 +42,9 @@ Parameter _parseParameter(ParameterElement parameter) {
 
 Reference _parameterToReference(ParameterElement element) {
   if (element.type == null) {
-    return null;
-  }
-  if (element.type.isUndefined) {
     var token = findBeginToken(element);
     return refer(token.toString());
   }
-
   return _typeToReference(element.type);
 }
 
@@ -81,17 +68,11 @@ FunctionType _functionTypedElementToFunctionType(
     return b
       ..returnType = _typeToReference(element.returnType)
       ..types.addAll(element.typeFormals.map((f) => _typeToReference(f.type)))
-      ..requiredParameters.addAll(element.parameters
-          .where((p) => p.isNotOptional)
-          .map(_parseParameter)
-          .map((p) => p.type))
-      ..namedParameters.addEntries(element.parameters
-          .where((p) => p.isNamed)
-          .map(_parseParameter)
-          .map((p) => MapEntry(p.name, p.type)))
-      ..optionalParameters.addAll(element.parameters
-          .where((p) => p.isOptionalPositional)
-          .map(_parseParameter)
-          .map((p) => p.type));
+      ..requiredParameters
+          .addAll(element.parameters.where((p) => p.isNotOptional).map(_parseParameter).map((p) => p.type))
+      ..namedParameters.addEntries(
+          element.parameters.where((p) => p.isNamed).map(_parseParameter).map((p) => MapEntry(p.name, p.type)))
+      ..optionalParameters
+          .addAll(element.parameters.where((p) => p.isOptionalPositional).map(_parseParameter).map((p) => p.type));
   });
 }

@@ -29,8 +29,7 @@ const _kOverrideDecorator = CodeExpression(Code('override'));
 /// The function must be decorated by `@widget` and be a top level function.
 /// The type of the widget is infered by the arguments of the function and defaults
 /// to `StatelessWidget`
-class FunctionalWidgetGenerator
-    extends GeneratorForAnnotation<FunctionalWidget> {
+class FunctionalWidgetGenerator extends GeneratorForAnnotation<FunctionalWidget> {
   FunctionalWidgetGenerator([FunctionalWidget options])
       : _defaultOptions = FunctionalWidget(
           debugFillProperties: options?.debugFillProperties ?? false,
@@ -42,14 +41,11 @@ class FunctionalWidgetGenerator
   final _emitter = DartEmitter();
 
   @override
-  String generateForAnnotatedElement(
-      Element element, ConstantReader annotation, BuildStep buildStep) {
+  String generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
     final function = _checkValidElement(element);
     final type = parseFunctionalWidetAnnotation(annotation);
 
-    return _makeClassFromFunctionElement(function, type)
-        .accept(_emitter)
-        .toString();
+    return _makeClassFromFunctionElement(function, type).accept(_emitter).toString();
   }
 
   FunctionElement _checkValidElement(Element element) {
@@ -79,8 +75,7 @@ class FunctionalWidgetGenerator
     return function;
   }
 
-  Spec _makeClassFromFunctionElement(
-      FunctionElement functionElement, FunctionalWidget annotation) {
+  Spec _makeClassFromFunctionElement(FunctionElement functionElement, FunctionalWidget annotation) {
     final parameters = FunctionParameters.parseFunctionElement(functionElement);
 
     final userDefined = parameters.userDefined;
@@ -92,27 +87,18 @@ class FunctionalWidgetGenerator
         final widgetType = annotation.widgetType ?? _defaultOptions.widgetType;
         b
           ..name = _toTitle(functionElement.name)
-          ..types.addAll(
-              _parseTypeParemeters(functionElement.typeParameters).toList())
-          ..extend = widgetType == FunctionalWidgetType.hook
-              ? _hookWidgetRef
-              : _statelessWidgetRef
-          ..fields.addAll(_paramsToFields(userDefined,
-              doc: functionElement.documentationComment))
-          ..constructors.add(_getConstructor(userDefined,
-              doc: functionElement.documentationComment))
-          ..methods.add(_createBuildMethod(
-              functionElement.displayName, positional, named, functionElement));
+          ..types.addAll(_parseTypeParemeters(functionElement.typeParameters).toList())
+          ..extend = widgetType == FunctionalWidgetType.hook ? _hookWidgetRef : _statelessWidgetRef
+          ..fields.addAll(_paramsToFields(userDefined, doc: functionElement.documentationComment))
+          ..constructors.add(_getConstructor(userDefined, doc: functionElement.documentationComment))
+          ..methods.add(_createBuildMethod(functionElement.displayName, positional, named, functionElement));
         if (functionElement.documentationComment != null) {
           b.docs.add(functionElement.documentationComment);
         }
         _generateEquality(annotation, userDefined, b, functionElement);
-        if (annotation.debugFillProperties ??
-            _defaultOptions.debugFillProperties) {
-          final overrideDebugFillProperties = _overrideDebugFillProperties(
-              userDefined, functionElement.parameters);
-          if (overrideDebugFillProperties != null)
-            b.methods.add(overrideDebugFillProperties);
+        if (annotation.debugFillProperties ?? _defaultOptions.debugFillProperties) {
+          final overrideDebugFillProperties = _overrideDebugFillProperties(userDefined, functionElement.parameters);
+          if (overrideDebugFillProperties != null) b.methods.add(overrideDebugFillProperties);
         }
       },
     );
@@ -139,8 +125,7 @@ class FunctionalWidgetGenerator
     }
   }
 
-  Map<String, Expression> _computeBuildNamedParametersExpression(
-      FunctionParameters parameters) {
+  Map<String, Expression> _computeBuildNamedParametersExpression(FunctionParameters parameters) {
     final named = <String, Expression>{};
     for (final p in parameters.userDefined.where((p) => p.named)) {
       named[p.name] = CodeExpression(Code(p.name));
@@ -148,25 +133,17 @@ class FunctionalWidgetGenerator
     return named;
   }
 
-  List<Expression> _computeBuildPositionalParametersExpression(
-      FunctionParameters parameters) {
+  List<Expression> _computeBuildPositionalParametersExpression(FunctionParameters parameters) {
     final positional = <Expression>[];
-    if (parameters.startsWithContext)
-      positional.add(const CodeExpression(Code('_context')));
-    if (parameters.startsWithKey)
-      positional.add(const CodeExpression(Code('key')));
-    if (parameters.followedByContext)
-      positional.add(const CodeExpression(Code('_context')));
-    if (parameters.followedByKey)
-      positional.add(const CodeExpression(Code('key')));
-    positional.addAll(parameters.userDefined
-        .where((p) => !p.named)
-        .map((p) => CodeExpression(Code(p.name))));
+    if (parameters.startsWithContext) positional.add(const CodeExpression(Code('_context')));
+    if (parameters.startsWithKey) positional.add(const CodeExpression(Code('key')));
+    if (parameters.followedByContext) positional.add(const CodeExpression(Code('_context')));
+    if (parameters.followedByKey) positional.add(const CodeExpression(Code('key')));
+    positional.addAll(parameters.userDefined.where((p) => !p.named).map((p) => CodeExpression(Code(p.name))));
     return positional;
   }
 
-  Method _overrideDebugFillProperties(
-      List<Parameter> userFields, List<ParameterElement> elements) {
+  Method _overrideDebugFillProperties(List<Parameter> userFields, List<ParameterElement> elements) {
     return userFields.isEmpty
         ? null
         : Method((b) => b
@@ -180,9 +157,8 @@ class FunctionalWidgetGenerator
           ..returns = refer('void')
           ..lambda = false
           ..body = Block.of(
-            [const Code('super.debugFillProperties(properties);')]..addAll(
-                userFields.map((f) => _parameterToDiagnostic(
-                    f, elements.firstWhere((e) => e.name == f.name)))),
+            [const Code('super.debugFillProperties(properties);')]
+              ..addAll(userFields.map((f) => _parameterToDiagnostic(f, elements.firstWhere((e) => e.name == f.name)))),
           ));
   }
 
@@ -207,15 +183,13 @@ class FunctionalWidgetGenerator
             : 'DiagnosticsProperty';
     }
 
-    return Code(
-        "properties.add($propertyType('${parameter.name}', ${parameter.name}));");
+    return Code("properties.add($propertyType('${parameter.name}', ${parameter.name}));");
   }
 
   String _getFallbackElementDiagnostic(ParameterElement element) =>
-      'DiagnosticsProperty<${element.type.isUndefined ? findBeginToken(element) : element.type.displayName}>';
+      'DiagnosticsProperty<${element.type == null ? findBeginToken(element) : element.type.displayName}>';
 
-  String _tryParseFunctionToDiagnostic(
-      ParameterElement element, String propertyType) {
+  String _tryParseFunctionToDiagnostic(ParameterElement element, String propertyType) {
     final kind = element.type.element?.kind;
     if (kind == ElementKind.FUNCTION ||
         kind == ElementKind.FUNCTION_TYPE_ALIAS ||
@@ -226,8 +200,7 @@ class FunctionalWidgetGenerator
     return propertyType;
   }
 
-  String _tryParseClassToEnumDiagnostic(
-      ParameterElement element, String propertyType) {
+  String _tryParseClassToEnumDiagnostic(ParameterElement element, String propertyType) {
     if (element.type.element is ClassElement) {
       final classElement = element.type.element as ClassElement;
       if (classElement.isEnum) {
@@ -247,9 +220,8 @@ class FunctionalWidgetGenerator
         ? null
         : Method(
             (b) {
-              final serializedTypeParameters = typeParameters.isEmpty
-                  ? ''
-                  : '<${typeParameters.map((t) => t.displayName).join(', ')}>';
+              final serializedTypeParameters =
+                  typeParameters.isEmpty ? '' : '<${typeParameters.map((t) => t.displayName).join(', ')}>';
               return b
                 ..annotations.add(_kOverrideDecorator)
                 ..returns = refer('bool')
@@ -268,20 +240,13 @@ class FunctionalWidgetGenerator
           );
   }
 
-  String _serializeEquality(
-      List<Parameter> userFields, FunctionalWidgetEquality equality) {
+  String _serializeEquality(List<Parameter> userFields, FunctionalWidgetEquality equality) {
     switch (equality) {
       case FunctionalWidgetEquality.identical:
-        return userFields
-            .map((f) => f.name)
-            .map((name) => 'identical($name, o.$name)')
-            .join(' &&');
+        return userFields.map((f) => f.name).map((name) => 'identical($name, o.$name)').join(' &&');
       case FunctionalWidgetEquality.equal:
       default:
-        return userFields
-            .map((f) => f.name)
-            .map((name) => '$name == o.$name')
-            .join(' &&');
+        return userFields.map((f) => f.name).map((name) => '$name == o.$name').join(' &&');
     }
   }
 
@@ -296,12 +261,11 @@ class FunctionalWidgetGenerator
           ..lambda = true
           ..body = userFields.length == 1
               ? Code('${userFields.first.name}.hashCode')
-              : Code(
-                  'hashValues(${userFields.map((f) => f.name).join(', ')})'));
+              : Code('hashValues(${userFields.map((f) => f.name).join(', ')})'));
   }
 
-  Method _createBuildMethod(String functionName, List<Expression> positional,
-      Map<String, Expression> named, FunctionElement function) {
+  Method _createBuildMethod(
+      String functionName, List<Expression> positional, Map<String, Expression> named, FunctionElement function) {
     return Method(
       (b) => b
         ..name = 'build'
@@ -313,12 +277,7 @@ class FunctionalWidgetGenerator
             ..type = _buildContextRef),
         )
         ..body = CodeExpression(Code(functionName))
-            .call(
-                positional,
-                named,
-                function.typeParameters
-                    ?.map((p) => refer(p.displayName))
-                    ?.toList())
+            .call(positional, named, function.typeParameters?.map((p) => refer(p.displayName))?.toList())
             .code,
     );
   }
@@ -343,16 +302,14 @@ class FunctionalWidgetGenerator
           ..docs.clear()
           ..type = _keyRef))
         ..docs.add(doc ?? '')
-        ..requiredParameters
-            .addAll(fields.where((p) => !p.named).map((p) => p.rebuild((b) => b
-              ..toThis = true
-              ..docs.clear()
-              ..type = null)))
-        ..optionalParameters
-            .addAll(fields.where((p) => p.named).map((p) => p.rebuild((b) => b
-              ..toThis = true
-              ..docs.clear()
-              ..type = null)))
+        ..requiredParameters.addAll(fields.where((p) => !p.named).map((p) => p.rebuild((b) => b
+          ..toThis = true
+          ..docs.clear()
+          ..type = null)))
+        ..optionalParameters.addAll(fields.where((p) => p.named).map((p) => p.rebuild((b) => b
+          ..toThis = true
+          ..docs.clear()
+          ..type = null)))
         ..initializers.add(const Code('super(key: key)')),
     );
   }
