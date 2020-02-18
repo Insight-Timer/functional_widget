@@ -187,9 +187,10 @@ class FunctionalWidgetGenerator extends GeneratorForAnnotation<FunctionalWidget>
   }
 
   String _getFallbackElementDiagnostic(ParameterElement element) =>
-      'DiagnosticsProperty<${element.type == null ? findBeginToken(element) : element.type.displayName}>';
+      'DiagnosticsProperty<${element.type.element == null ? findBeginToken(element) : element.type.displayName}>';
 
-  String _tryParseFunctionToDiagnostic(ParameterElement element, String propertyType) {
+  String _tryParseFunctionToDiagnostic(
+      ParameterElement element, String propertyType) {
     final kind = element.type.element?.kind;
     if (kind == ElementKind.FUNCTION ||
         kind == ElementKind.FUNCTION_TYPE_ALIAS ||

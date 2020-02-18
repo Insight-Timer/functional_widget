@@ -42,9 +42,13 @@ Parameter _parseParameter(ParameterElement parameter) {
 
 Reference _parameterToReference(ParameterElement element) {
   if (element.type == null) {
+    return null;
+  }
+  if (element.type.element == null) {
     var token = findBeginToken(element);
     return refer(token.toString());
   }
+
   return _typeToReference(element.type);
 }
 
